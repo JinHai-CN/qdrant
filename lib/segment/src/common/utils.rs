@@ -98,13 +98,16 @@ impl MultiValue<&Value> {
     }
 }
 
-impl<T> Iterator for MultiValue<T> {
+impl<T> IntoIterator for MultiValue<T> {
     type Item = T;
+    // propagate to Vec internal iterator
+    type IntoIter = std::vec::IntoIter<Self::Item>;
 
-    fn next(&mut self) -> Option<Self::Item> {
+    fn into_iter(self) -> Self::IntoIter {
         match self {
-            Self::Single(opt) => opt.take(),
-            Self::Multiple(vec) => vec.pop(),
+            Self::Single(None) => vec![].into_iter(),
+            Self::Single(Some(a)) => vec![a].into_iter(),
+            Self::Multiple(vec) => vec.into_iter(),
         }
     }
 }

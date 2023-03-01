@@ -143,7 +143,7 @@ mod tests {
         );
 
         if let Err(OperationError::MissedVectorName { received_name }) = result {
-            assert!(received_name == "vector1");
+            assert_eq!(received_name, "vector1");
         } else {
             panic!("wrong upsert result")
         }
@@ -166,7 +166,7 @@ mod tests {
         );
 
         if let Err(OperationError::VectorNameNotExists { received_name }) = result {
-            assert!(received_name == "vector4");
+            assert_eq!(received_name, "vector4");
         } else {
             panic!("wrong upsert result")
         }
