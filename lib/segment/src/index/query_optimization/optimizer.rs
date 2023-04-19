@@ -10,7 +10,7 @@ use crate::index::query_estimator::{
 };
 use crate::index::query_optimization::condition_converter::condition_converter;
 use crate::index::query_optimization::nested_filter::{
-    merge_nested_condition_checkers, nested_condition_converter,
+    merge_nested_matching_indices, nested_condition_converter,
 };
 use crate::index::query_optimization::optimized_filter::{OptimizedCondition, OptimizedFilter};
 use crate::index::query_optimization::payload_provider::PayloadProvider;
@@ -139,7 +139,7 @@ where
             nested_checker_fns.push(condition_checker);
             estimations.push(estimation);
         });
-        let merged = merge_nested_condition_checkers(nested_checker_fns);
+        let merged = merge_nested_matching_indices(nested_checker_fns);
         // TODO is this correct?
         let estimation = combine_must_estimations(&estimations, total);
         vec![(OptimizedCondition::Checker(merged), estimation)]

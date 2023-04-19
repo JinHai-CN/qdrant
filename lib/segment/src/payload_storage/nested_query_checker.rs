@@ -12,14 +12,15 @@ use crate::types::{
 // TODO add check_nested_should and check_nested_must_not
 fn check_nested_must<F>(checker: &F, must: &Option<Vec<Condition>>) -> bool
 where
-    F: Fn(&Condition) -> Vec<String>,
+    F: Fn(&Condition) -> Vec<usize>,
 {
     match must {
         None => true,
         Some(conditions) => {
             let condition_count = conditions.len();
-            let matching_paths: Vec<String> = conditions.iter().flat_map(checker).collect();
-            let mut matches: HashMap<String, usize> = HashMap::new();
+            let matching_paths: Vec<usize> = conditions.iter().flat_map(checker).collect();
+            // Count the number of matches per element index
+            let mut matches: HashMap<usize, usize> = HashMap::new();
             for m in matching_paths {
                 *matches.entry(m).or_insert(0) += 1;
             }
@@ -52,43 +53,47 @@ where
 
 pub fn nested_filter_checker<F>(matching_paths: &F, nested_filter: &Filter) -> bool
 where
-    F: Fn(&Condition) -> Vec<String>,
+    F: Fn(&Condition) -> Vec<usize>,
 {
     check_nested_must(matching_paths, &nested_filter.must)
 }
 
+/// Return element indices matching the condition in the payload
 pub fn check_nested_is_empty_condition(
     nested_path: &str,
     is_empty: &IsEmptyCondition,
     payload: &Payload,
-) -> Vec<String> {
+) -> Vec<usize> {
+    // full nested path
     let full_path = format!("{}.{}", nested_path, is_empty.is_empty.key);
     let field_values = payload.get_value(&full_path);
 
-    let mut paths = vec![];
+    let mut matching_indices = vec![];
     for (index, p) in field_values.values().iter().enumerate() {
         match p {
-            Value::Null => paths.push(format!("{}.{}", full_path, index)),
-            Value::Array(vec) if vec.is_empty() => paths.push(format!("{}.{}", full_path, index)),
+            Value::Null => matching_indices.push(index),
+            Value::Array(vec) if vec.is_empty() => matching_indices.push(index),
             _ => (),
         }
     }
-    paths
+    matching_indices
 }
 
+/// Return element indices matching the condition in the payload
 pub fn check_nested_is_null_condition(
     nested_path: &str,
     is_null: &IsNullCondition,
     payload: &Payload,
-) -> Vec<String> {
+) -> Vec<usize> {
+    // full nested path
     let full_path = format!("{}.{}", nested_path, is_null.is_null.key);
     let field_values = payload.get_value(&full_path);
 
     match field_values {
-        MultiValue::Single(None) => vec![format!("{}.{}", full_path, 0)],
+        MultiValue::Single(None) => vec![0],
         MultiValue::Single(Some(v)) => {
             if v.is_null() {
-                vec![format!("{}.{}", full_path, 0)]
+                vec![0]
             } else {
                 vec![]
             }
@@ -97,10 +102,10 @@ pub fn check_nested_is_null_condition(
             let mut paths = vec![];
             for (index, p) in multiple_values.iter().enumerate() {
                 match p {
-                    Value::Null => paths.push(format!("{}.{}", full_path, index)),
+                    Value::Null => paths.push(index),
                     Value::Array(vec) => {
                         if vec.iter().any(|val| val.is_null()) {
-                            paths.push(format!("{}.{}", full_path, index))
+                            paths.push(index)
                         }
                     }
                     _ => (),
@@ -111,16 +116,16 @@ pub fn check_nested_is_null_condition(
     }
 }
 
-/// Return inner payload paths matching the condition
+/// Return indexes of the elements matching the condition in the payload values
 pub fn nested_check_field_condition(
     field_condition: &FieldCondition,
     payload: &Payload,
     nested_path: &str,
-) -> Vec<String> {
+) -> Vec<usize> {
     let full_path = format!("{}.{}", nested_path, field_condition.key);
     let field_values = payload.get_value(&full_path);
 
-    let mut paths = vec![];
+    let mut matching_indices = vec![];
 
     for (index, p) in field_values.values().iter().enumerate() {
         let mut res = false;
@@ -151,10 +156,10 @@ pub fn nested_check_field_condition(
                 .as_ref()
                 .map_or(false, |condition| condition.check(p));
         if res {
-            paths.push(index.to_string()); // TODO full_path or local path?
+            matching_indices.push(index);
         }
     }
-    paths
+    matching_indices
 }
 
 #[cfg(test)]
