@@ -114,6 +114,15 @@ impl PayloadIndex for PlainPayloadIndex {
         }
     }
 
+    /// Forward to non nested implementation.
+    fn estimate_nested_cardinality(
+        &self,
+        query: &Filter,
+        _nested_path: &str,
+    ) -> CardinalityEstimation {
+        self.estimate_cardinality(query)
+    }
+
     fn query_points<'a>(
         &'a self,
         query: &'a Filter,

@@ -29,6 +29,13 @@ pub trait PayloadIndex {
     /// Estimate amount of points (min, max) which satisfies filtering condition.
     fn estimate_cardinality(&self, query: &Filter) -> CardinalityEstimation;
 
+    /// Estimate amount of points (min, max) which satisfies filtering of a nested condition.
+    fn estimate_nested_cardinality(
+        &self,
+        query: &Filter,
+        nested_path: &str,
+    ) -> CardinalityEstimation;
+
     /// Return list of all point ids, which satisfy filtering criteria
     fn query_points<'a>(
         &'a self,
