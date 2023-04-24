@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
+use crate::common::utils::JsonPathPayload;
 use crate::id_tracker::IdTrackerSS;
 use crate::index::field_index::{CardinalityEstimation, FieldIndex};
 use crate::index::query_estimator::{
@@ -45,7 +46,7 @@ pub fn optimize_filter<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<String>,
+    nested_path: Option<JsonPathPayload>,
 ) -> (OptimizedFilter<'a>, CardinalityEstimation)
 where
     F: Fn(&Condition) -> CardinalityEstimation,
@@ -119,7 +120,7 @@ fn convert_conditions<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<String>,
+    nested_path: Option<JsonPathPayload>,
 ) -> Vec<(OptimizedCondition<'a>, CardinalityEstimation)>
 where
     F: Fn(&Condition) -> CardinalityEstimation,
@@ -148,7 +149,7 @@ where
                         payload_provider.clone(),
                         estimator,
                         total,
-                        Some(nested_filter.key().to_string()),
+                        Some(JsonPathPayload::new(nested_filter.key().to_string())),
                     );
                     (OptimizedCondition::Filter(optimized_filter), estimation)
                 }
@@ -186,7 +187,7 @@ fn optimize_should<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<String>,
+    nested_path: Option<JsonPathPayload>,
 ) -> (Vec<OptimizedCondition<'a>>, CardinalityEstimation)
 where
     F: Fn(&Condition) -> CardinalityEstimation,
@@ -214,7 +215,7 @@ fn optimize_must<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<String>,
+    nested_path: Option<JsonPathPayload>,
 ) -> (Vec<OptimizedCondition<'a>>, CardinalityEstimation)
 where
     F: Fn(&Condition) -> CardinalityEstimation,
@@ -242,7 +243,7 @@ fn optimize_must_not<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<String>,
+    nested_path: Option<JsonPathPayload>,
 ) -> (Vec<OptimizedCondition<'a>>, CardinalityEstimation)
 where
     F: Fn(&Condition) -> CardinalityEstimation,

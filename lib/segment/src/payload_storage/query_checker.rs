@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use atomic_refcell::AtomicRefCell;
 
+use crate::common::utils::JsonPathPayload;
 use crate::id_tracker::IdTrackerSS;
 use crate::payload_storage::condition_checker::ValueChecker;
 use crate::payload_storage::nested_query_checker::check_nested_filter;
@@ -90,8 +91,8 @@ where
         }
         Condition::Nested(nested) => {
             let nested_filter = &nested.nested.filter;
-            let nested_path = &nested.nested.key;
-            check_nested_filter(nested_path, nested_filter, &get_payload)
+            let nested_path = JsonPathPayload::new(nested.nested.key.clone());
+            check_nested_filter(&nested_path, nested_filter, &get_payload)
         }
         Condition::Filter(_) => unreachable!(),
     };

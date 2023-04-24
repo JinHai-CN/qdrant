@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
+use crate::common::utils::JsonPathPayload;
 use crate::index::field_index::FieldIndex;
 use crate::index::query_optimization::optimized_filter::ConditionCheckerFn;
 use crate::index::query_optimization::optimizer::IndexesMap;
@@ -60,7 +61,7 @@ pub fn nested_conditions_converter<'a>(
     conditions: &'a [Condition],
     field_indexes: &'a IndexesMap,
     payload_provider: PayloadProvider,
-    nested_path: String,
+    nested_path: JsonPathPayload,
 ) -> Vec<NestedMatchingIndicesFn<'a>> {
     let mut nested_checker_fns = vec![];
     conditions.iter().for_each(|condition| {
@@ -79,14 +80,14 @@ pub fn nested_condition_converter<'a>(
     condition: &'a Condition,
     field_indexes: &'a IndexesMap,
     payload_provider: PayloadProvider,
-    nested_path: String,
+    nested_path: JsonPathPayload,
 ) -> NestedMatchingIndicesFn<'a> {
     match condition {
         Condition::Field(field_condition) => {
             // full path of the condition field
-            let full_path = format!("{}.{}", nested_path, field_condition.key);
+            let full_path = nested_path.add_segment(&field_condition.key);
             field_indexes
-                .get(&full_path)
+                .get(&full_path.path)
                 .and_then(|indexes| {
                     indexes
                         .iter()
@@ -116,17 +117,17 @@ pub fn nested_condition_converter<'a>(
             Box::new(move |_| vec![])
         }
         Condition::Nested(nested) => {
-            let full_path = format!("{}.{}", nested_path, nested.key());
             Box::new(move |point_id| {
                 // TODO should & must_not (does it make sense?)
                 match &nested.filter().must {
                     None => vec![],
                     Some(musts_conditions) => {
+                        let full_path = nested_path.add_segment(nested.key());
                         let matching_indices = nested_conditions_converter(
                             musts_conditions,
                             field_indexes,
                             payload_provider.clone(),
-                            full_path.clone(),
+                            full_path,
                         );
                         find_indices_matching_all_conditions(point_id, &matching_indices)
                     }

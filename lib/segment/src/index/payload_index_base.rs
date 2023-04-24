@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
+use crate::common::utils::JsonPathPayload;
 use crate::common::Flusher;
 use crate::entry::entry_point::OperationResult;
 use crate::index::field_index::{CardinalityEstimation, PayloadBlockCondition};
@@ -33,7 +34,7 @@ pub trait PayloadIndex {
     fn estimate_nested_cardinality(
         &self,
         query: &Filter,
-        nested_path: &str,
+        nested_path: &JsonPathPayload,
     ) -> CardinalityEstimation;
 
     /// Return list of all point ids, which satisfy filtering criteria

@@ -3,7 +3,7 @@ use std::ops::Deref;
 
 use serde_json::Value;
 
-use crate::common::utils::MultiValue;
+use crate::common::utils::{JsonPathPayload, MultiValue};
 use crate::payload_storage::condition_checker::ValueChecker;
 use crate::types::{
     Condition, FieldCondition, Filter, IsEmptyCondition, IsNullCondition, OwnedPayloadRef, Payload,
@@ -28,7 +28,11 @@ where
     }
 }
 
-pub fn check_nested_filter<'a, F>(nested_path: &str, nested_filter: &Filter, get_payload: F) -> bool
+pub fn check_nested_filter<'a, F>(
+    nested_path: &JsonPathPayload,
+    nested_filter: &Filter,
+    get_payload: F,
+) -> bool
 where
     F: Fn() -> OwnedPayloadRef<'a>,
 {
@@ -61,13 +65,13 @@ where
 
 /// Return element indices matching the condition in the payload
 pub fn check_nested_is_empty_condition(
-    nested_path: &str,
+    nested_path: &JsonPathPayload,
     is_empty: &IsEmptyCondition,
     payload: &Payload,
 ) -> Vec<usize> {
     // full nested path
-    let full_path = format!("{}.{}", nested_path, is_empty.is_empty.key);
-    let field_values = payload.get_value(&full_path);
+    let full_path = nested_path.add_segment(&is_empty.is_empty.key);
+    let field_values = payload.get_value(&full_path.path);
 
     let mut matching_indices = vec![];
     for (index, p) in field_values.values().iter().enumerate() {
@@ -82,13 +86,13 @@ pub fn check_nested_is_empty_condition(
 
 /// Return element indices matching the condition in the payload
 pub fn check_nested_is_null_condition(
-    nested_path: &str,
+    nested_path: &JsonPathPayload,
     is_null: &IsNullCondition,
     payload: &Payload,
 ) -> Vec<usize> {
     // full nested path
-    let full_path = format!("{}.{}", nested_path, is_null.is_null.key);
-    let field_values = payload.get_value(&full_path);
+    let full_path = nested_path.add_segment(&is_null.is_null.key);
+    let field_values = payload.get_value(&full_path.path);
 
     match field_values {
         MultiValue::Single(None) => vec![0],
@@ -121,10 +125,10 @@ pub fn check_nested_is_null_condition(
 pub fn nested_check_field_condition(
     field_condition: &FieldCondition,
     payload: &Payload,
-    nested_path: &str,
+    nested_path: &JsonPathPayload,
 ) -> Vec<usize> {
-    let full_path = format!("{}.{}", nested_path, field_condition.key);
-    let field_values = payload.get_value(&full_path);
+    let full_path = nested_path.add_segment(&field_condition.key);
+    let field_values = payload.get_value(&full_path.path);
 
     let mut matching_indices = vec![];
 

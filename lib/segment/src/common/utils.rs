@@ -309,6 +309,23 @@ pub fn transpose_map_into_named_vector(
     result
 }
 
+/// Light abstraction over a JSON path to avoid concatenating strings
+#[derive(Debug, Clone)]
+pub struct JsonPathPayload {
+    pub path: String,
+}
+
+impl JsonPathPayload {
+    pub fn new(path: String) -> Self {
+        Self { path }
+    }
+
+    pub fn add_segment(&self, segment: &str) -> Self {
+        let full_path = format!("{}.{}", self.path, segment);
+        JsonPathPayload::new(full_path)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
