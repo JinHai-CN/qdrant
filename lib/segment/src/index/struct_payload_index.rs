@@ -62,7 +62,6 @@ impl StructPayloadIndex {
             Some(path) => format!("{}.{}", path, condition.key),
             None => condition.key.to_string(),
         };
-
         self.field_indexes.get(&full_path).and_then(|indexes| {
             // rewrite condition with fullpath to enable cardinality estimation
             let full_path_condition = FieldCondition {
@@ -239,7 +238,12 @@ impl StructPayloadIndex {
         match condition {
             Condition::Filter(_) => panic!("Unexpected branching"),
             Condition::Nested(nested) => {
-                self.estimate_nested_cardinality(nested.filter(), nested.key())
+                // propagate complete nested path in case of multiple nested layers
+                let nested_path = match nested_path {
+                    Some(path) => format!("{}.{}", path, nested.key()),
+                    None => nested.key().to_string(),
+                };
+                self.estimate_nested_cardinality(nested.filter(), nested_path.as_str())
             }
             Condition::IsEmpty(IsEmptyCondition { is_empty: field }) => {
                 let full_path = match nested_path {

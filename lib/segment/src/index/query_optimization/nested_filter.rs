@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use itertools::Itertools;
 
-use crate::id_tracker::IdTrackerSS;
 use crate::index::field_index::FieldIndex;
 use crate::index::query_optimization::optimized_filter::ConditionCheckerFn;
 use crate::index::query_optimization::optimizer::IndexesMap;
@@ -28,29 +27,59 @@ pub fn merge_nested_matching_indices(
     nested_checkers: Vec<NestedMatchingIndicesFn>,
 ) -> ConditionCheckerFn {
     Box::new(move |point_id: PointOffsetType| {
-        // number of nested conditions to match
-        let condition_count = nested_checkers.len();
-        // binds payload `index` element to the number of matches it has accumulated
-        let mut matches: HashMap<ElemIndex, usize> = HashMap::new();
-        for nested_checker in &nested_checkers {
-            let matching_indices = nested_checker(point_id);
-            for index in matching_indices {
-                let count = matches.entry(index).or_insert(0);
-                *count += 1;
-            }
-        }
+        let matches = find_indices_matching_all_conditions(point_id, &nested_checkers);
         // if any of the nested path is matching for each nested condition
-        // then the point_id matches and matching synthetic `ConditionCheckerFn can be created`
-        matches.iter().any(|(_, count)| *count == condition_count)
+        // then the point_id matches and a matching `ConditionCheckerFn can be returned
+        !matches.is_empty()
     })
+}
+
+/// Apply `point_id` to `nested_checkers` and return the list of indices in the payload matching all conditions
+pub fn find_indices_matching_all_conditions(
+    point_id: PointOffsetType,
+    nested_checkers: &Vec<NestedMatchingIndicesFn>,
+) -> Vec<ElemIndex> {
+    let condition_len = nested_checkers.len();
+    let mut matches: HashMap<ElemIndex, usize> = HashMap::new();
+    for f in nested_checkers {
+        let inner_matches = f(point_id);
+        for inner in inner_matches {
+            let count = matches.entry(inner).or_insert(0);
+            *count += 1;
+        }
+    }
+    // gather all indices that have matched all musts conditions
+    matches
+        .iter()
+        .filter(|(_, &count)| count == condition_len)
+        .map(|(index, _)| *index)
+        .collect()
+}
+
+pub fn nested_conditions_converter<'a>(
+    conditions: &'a [Condition],
+    field_indexes: &'a IndexesMap,
+    payload_provider: PayloadProvider,
+    nested_path: String,
+) -> Vec<NestedMatchingIndicesFn<'a>> {
+    let mut nested_checker_fns = vec![];
+    conditions.iter().for_each(|condition| {
+        let condition_checker = nested_condition_converter(
+            condition,
+            field_indexes,
+            payload_provider.clone(),
+            nested_path.clone(),
+        );
+        nested_checker_fns.push(condition_checker);
+    });
+    nested_checker_fns
 }
 
 pub fn nested_condition_converter<'a>(
     condition: &'a Condition,
     field_indexes: &'a IndexesMap,
     payload_provider: PayloadProvider,
-    _id_tracker: &IdTrackerSS,
-    nested_path: &'a str,
+    nested_path: String,
 ) -> NestedMatchingIndicesFn<'a> {
     match condition {
         Condition::Field(field_condition) => {
@@ -67,23 +96,43 @@ pub fn nested_condition_converter<'a>(
                 .unwrap_or_else(|| {
                     Box::new(move |point_id| {
                         payload_provider.with_payload(point_id, |payload| {
-                            nested_check_field_condition(field_condition, &payload, nested_path)
+                            nested_check_field_condition(field_condition, &payload, &nested_path)
                         })
                     })
                 })
         }
         Condition::IsEmpty(is_empty) => Box::new(move |point_id| {
             payload_provider.with_payload(point_id, |payload| {
-                check_nested_is_empty_condition(nested_path, is_empty, &payload)
+                check_nested_is_empty_condition(&nested_path, is_empty, &payload)
             })
         }),
         Condition::IsNull(is_null) => Box::new(move |point_id| {
             payload_provider.with_payload(point_id, |payload| {
-                check_nested_is_null_condition(nested_path, is_null, &payload)
+                check_nested_is_null_condition(&nested_path, is_null, &payload)
             })
         }),
-        Condition::HasId(_) => unreachable!(), // Is there a use case for this?
-        Condition::Nested(_) => unreachable!(),
+        Condition::HasId(_) => {
+            // No support for has_id in nested queries
+            Box::new(move |_| vec![])
+        }
+        Condition::Nested(nested) => {
+            let full_path = format!("{}.{}", nested_path, nested.key());
+            Box::new(move |point_id| {
+                // TODO should & must_not (does it make sense?)
+                match &nested.filter().must {
+                    None => vec![],
+                    Some(musts_conditions) => {
+                        let matching_indices = nested_conditions_converter(
+                            musts_conditions,
+                            field_indexes,
+                            payload_provider.clone(),
+                            full_path.clone(),
+                        );
+                        find_indices_matching_all_conditions(point_id, &matching_indices)
+                    }
+                }
+            })
+        }
         Condition::Filter(_) => unreachable!(),
     }
 }

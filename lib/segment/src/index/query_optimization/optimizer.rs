@@ -10,7 +10,7 @@ use crate::index::query_estimator::{
 };
 use crate::index::query_optimization::condition_converter::condition_converter;
 use crate::index::query_optimization::nested_filter::{
-    merge_nested_matching_indices, nested_condition_converter,
+    merge_nested_matching_indices, nested_conditions_converter,
 };
 use crate::index::query_optimization::optimized_filter::{OptimizedCondition, OptimizedFilter};
 use crate::index::query_optimization::payload_provider::PayloadProvider;
@@ -45,7 +45,7 @@ pub fn optimize_filter<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<&'a str>,
+    nested_path: Option<String>,
 ) -> (OptimizedFilter<'a>, CardinalityEstimation)
 where
     F: Fn(&Condition) -> CardinalityEstimation,
@@ -62,7 +62,7 @@ where
                     payload_provider.clone(),
                     estimator,
                     total,
-                    nested_path,
+                    nested_path.clone(),
                 );
                 filter_estimations.push(estimation);
                 Some(optimized_conditions)
@@ -79,7 +79,7 @@ where
                     payload_provider.clone(),
                     estimator,
                     total,
-                    nested_path,
+                    nested_path.clone(),
                 );
                 filter_estimations.push(estimation);
                 Some(optimized_conditions)
@@ -119,24 +119,17 @@ fn convert_conditions<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<&'a str>,
+    nested_path: Option<String>,
 ) -> Vec<(OptimizedCondition<'a>, CardinalityEstimation)>
 where
     F: Fn(&Condition) -> CardinalityEstimation,
 {
     if let Some(nested_path) = nested_path {
-        let mut nested_checker_fns = vec![];
+        let nested_checker_fns =
+            nested_conditions_converter(conditions, field_indexes, payload_provider, nested_path);
         let mut estimations = vec![];
         conditions.iter().for_each(|condition| {
             let estimation = estimator(condition);
-            let condition_checker = nested_condition_converter(
-                condition,
-                field_indexes,
-                payload_provider.clone(),
-                id_tracker,
-                nested_path,
-            );
-            nested_checker_fns.push(condition_checker);
             estimations.push(estimation);
         });
         let merged = merge_nested_matching_indices(nested_checker_fns);
@@ -155,7 +148,7 @@ where
                         payload_provider.clone(),
                         estimator,
                         total,
-                        Some(nested_filter.key()),
+                        Some(nested_filter.key().to_string()),
                     );
                     (OptimizedCondition::Filter(optimized_filter), estimation)
                 }
@@ -193,7 +186,7 @@ fn optimize_should<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<&'a str>,
+    nested_path: Option<String>,
 ) -> (Vec<OptimizedCondition<'a>>, CardinalityEstimation)
 where
     F: Fn(&Condition) -> CardinalityEstimation,
@@ -221,7 +214,7 @@ fn optimize_must<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<&'a str>,
+    nested_path: Option<String>,
 ) -> (Vec<OptimizedCondition<'a>>, CardinalityEstimation)
 where
     F: Fn(&Condition) -> CardinalityEstimation,
@@ -249,7 +242,7 @@ fn optimize_must_not<'a, F>(
     payload_provider: PayloadProvider,
     estimator: &F,
     total: usize,
-    nested_path: Option<&'a str>,
+    nested_path: Option<String>,
 ) -> (Vec<OptimizedCondition<'a>>, CardinalityEstimation)
 where
     F: Fn(&Condition) -> CardinalityEstimation,

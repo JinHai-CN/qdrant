@@ -496,4 +496,38 @@ mod tests {
         // select bad index from array
         assert!(get_value_from_json_map("a.b[z]", &map).check_is_empty());
     }
+
+    #[test]
+    fn test_get_deeply_nested_array_value_from_json_map() {
+        let map = serde_json::from_str::<serde_json::Map<String, Value>>(
+            r#"
+            {
+                "arr1": [
+                    {
+                        "arr2": [
+                            {"a": 1, "b": 2}
+                        ]
+                    },
+                    {
+                        "arr2": [
+                            {"a": 3, "b": 4},
+                            {"a": 5, "b": 6}
+                        ]
+                    }
+                ]
+            }
+            "#,
+        )
+        .unwrap();
+
+        // extract and flatten all elements from arrays
+        assert_eq!(
+            get_value_from_json_map("arr1[].arr2[].a", &map).values(),
+            vec![
+                &Value::Number(1.into()),
+                &Value::Number(3.into()),
+                &Value::Number(5.into()),
+            ]
+        );
+    }
 }

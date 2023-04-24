@@ -705,7 +705,7 @@ def test_nested_payload_indexing_operations():
     assert len(response.json()['result']['points']) == 1
     assert response.json()['result']['points'][0]['payload']['country']['name'] == "Germany"
 
-    # Search nested georadius field
+    # Search nested geo-radius field
     berlin_center = {
         "lon": 13.76117,
         "lat": 52.33825,

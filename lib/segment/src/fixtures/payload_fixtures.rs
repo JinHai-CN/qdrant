@@ -46,6 +46,7 @@ pub const LAT_RANGE: Range<f64> = -90.0..90.0;
 
 pub const STR_KEY: &str = "kvd";
 pub const STR_PROJ_KEY: &str = "kvd_proj";
+pub const STR_DEEP_PROJ_KEY: &str = "kvd_deep_proj";
 pub const INT_KEY: &str = "int";
 pub const INT_KEY_2: &str = "int2";
 pub const FLT_KEY: &str = "flt";
@@ -276,6 +277,15 @@ pub fn generate_diverse_nested_payload<R: Rng + ?Sized>(rnd_gen: &mut R) -> Payl
         STR_PROJ_KEY: {
             "nested_1": [
                 { "nested_2": random_keyword_payload(rnd_gen, 1..=3) }
+            ]
+        },
+        STR_DEEP_PROJ_KEY: {
+            "nested_1": [
+                {
+                    "nested_2": [
+                        { "nested_3": random_keyword_payload(rnd_gen, 1..=3) }
+                    ]
+                }
             ]
         },
     })

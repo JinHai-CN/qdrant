@@ -1137,7 +1137,7 @@ impl From<HashSet<PointIdType>> for HasIdCondition {
 /// Select points with payload for a specified nested field
 #[derive(Debug, Deserialize, Serialize, JsonSchema, Clone, PartialEq)]
 pub struct NestedCondition {
-    pub key: String,
+    pub key: PayloadKeyType,
     pub filter: Filter,
 }
 

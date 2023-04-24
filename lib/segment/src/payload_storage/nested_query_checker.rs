@@ -9,8 +9,7 @@ use crate::types::{
     Condition, FieldCondition, Filter, IsEmptyCondition, IsNullCondition, OwnedPayloadRef, Payload,
 };
 
-// TODO add check_nested_should and check_nested_must_not
-fn check_nested_must<F>(checker: &F, must: &Option<Vec<Condition>>) -> bool
+fn check_all_nested_conditions<F>(checker: &F, must: &Option<Vec<Condition>>) -> bool
 where
     F: Fn(&Condition) -> Vec<usize>,
 {
@@ -44,18 +43,20 @@ where
             check_nested_is_null_condition(nested_path, is_null, get_payload().deref())
         }
         Condition::HasId(_) => unreachable!(), // Is there a use case for nested HasId?
-        Condition::Nested(_) => unreachable!(),
+        Condition::Nested(_) => unreachable!(), // Several layers of nesting are not supported here
         Condition::Filter(_) => unreachable!(),
     };
 
     nested_filter_checker(&nested_checker, nested_filter)
 }
 
+/// Warning only `must` conditions are supported for those tests
 pub fn nested_filter_checker<F>(matching_paths: &F, nested_filter: &Filter) -> bool
 where
     F: Fn(&Condition) -> Vec<usize>,
 {
-    check_nested_must(matching_paths, &nested_filter.must)
+    // TODO add check_nested_should and check_nested_must_not
+    check_all_nested_conditions(matching_paths, &nested_filter.must)
 }
 
 /// Return element indices matching the condition in the payload

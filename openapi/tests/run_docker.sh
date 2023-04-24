@@ -14,5 +14,4 @@ cd "$(dirname "$0")"
 
 trap clear_after_tests EXIT
 
-#pytest -s openapi_integration/test_nested_payload_indexing.py
 pytest -s
