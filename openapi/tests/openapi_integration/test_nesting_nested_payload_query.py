@@ -3,10 +3,10 @@ import pytest
 from .helpers.helpers import request_with_validation
 from .helpers.collection_setup import drop_collection
 
-collection_name = 'test_collection_deep_nested_payload_query'
+collection_name = 'test_collection_nesting_nested_payload_query'
 
 
-def deep_nested_payload_collection_setup(collection_name, on_disk_payload=False):
+def nesting_nested_payload_collection_setup(collection_name, on_disk_payload=False):
     response = request_with_validation(
         api='/collections/{collection_name}',
         method="DELETE",
@@ -89,12 +89,12 @@ def deep_nested_payload_collection_setup(collection_name, on_disk_payload=False)
 
 @pytest.fixture(autouse=True)
 def setup():
-    deep_nested_payload_collection_setup(collection_name=collection_name)
+    nesting_nested_payload_collection_setup(collection_name=collection_name)
     yield
     drop_collection(collection_name=collection_name)
 
 
-def test_deep_nested_payload_query_operations():
+def test_nesting_nested_payload_query_operations():
     response = request_with_validation(
         api='/collections/{collection_name}',
         method="GET",
