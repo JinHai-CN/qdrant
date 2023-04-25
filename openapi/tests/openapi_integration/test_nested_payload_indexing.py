@@ -278,7 +278,7 @@ def test_nested_payload_indexing_operations():
         path_params={'collection_name': collection_name},
         body={
             "filter": {
-                "must": [
+                "should": [
                     {
                         "key": "country.capital",
                         "match": {
@@ -293,6 +293,51 @@ def test_nested_payload_indexing_operations():
     assert response.ok
     assert len(response.json()['result']['points']) == 1
     assert response.json()['result']['points'][0]['payload']['country']['name'] == "England"
+
+    # Search nested without payload index
+    response = request_with_validation(
+        api='/collections/{collection_name}/points/scroll',
+        method="POST",
+        path_params={'collection_name': collection_name},
+        body={
+            "filter": {
+                "should": [
+                    {
+                        "key": "country.name",
+                        "match": {
+                            "value": "France"
+                        }
+                    }
+                ]
+            },
+            "limit": 3
+        }
+    )
+    assert response.ok
+    assert len(response.json()['result']['points']) == 1
+    assert response.json()['result']['points'][0]['payload']['country']['capital'] == "Paris"
+
+    # Search through array without payload index
+    response = request_with_validation(
+        api='/collections/{collection_name}/points/scroll',
+        method="POST",
+        path_params={'collection_name': collection_name},
+        body={
+            "filter": {
+                "should": [
+                    {
+                        "key": "country.cities.population",  # Do not implicitly do inside nested array
+                        "range": {
+                            "gte": 9.0,
+                        }
+                    }
+                ]
+            },
+            "limit": 3
+        }
+    )
+    assert response.ok
+    assert len(response.json()['result']['points']) == 0
 
     # Search through array with payload index
     response = request_with_validation(
