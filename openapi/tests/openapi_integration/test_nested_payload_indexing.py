@@ -269,7 +269,7 @@ def test_nested_payload_indexing_operations():
     assert response.json()['result']['payload_schema']['country.capital']['data_type'] == "keyword"
     assert response.json()['result']['payload_schema']['country.capital']['points'] == 4
     assert response.json()['result']['payload_schema']['country.cities[].population']['data_type'] == "float"
-    assert response.json()['result']['payload_schema']['country.cities[].population']['points'] == 4  # indexed records
+    assert response.json()['result']['payload_schema']['country.cities[].population']['points'] == 4 # indexed records
 
     # Search nested field through with payload index
     response = request_with_validation(
@@ -384,7 +384,7 @@ def test_nested_payload_indexing_operations():
     )
     assert response.ok
     assert len(response.json()['result']['points']) == 1
-    assert response.json()['result']['points'][0]['payload']['country']['capital'] == "Paris"
+    assert response.json()['result']['points'][0]['payload']['country']['name'] == "France"
 
     # Search without nested filter
     response = request_with_validation(
