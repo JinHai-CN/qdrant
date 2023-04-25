@@ -236,7 +236,7 @@ impl StructPayloadIndex {
             Condition::Filter(_) => panic!("Unexpected branching"),
             Condition::Nested(nested) => {
                 // propagate complete nested path in case of multiple nested layers
-                let full_path = JsonPathPayload::extend_or_new(nested_path, nested.key());
+                let full_path = JsonPathPayload::extend_or_new(nested_path, &nested.array_key());
                 self.estimate_nested_cardinality(nested.filter(), &full_path)
             }
             Condition::IsEmpty(IsEmptyCondition { is_empty: field }) => {

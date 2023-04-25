@@ -121,7 +121,7 @@ pub fn nested_condition_converter<'a>(
                 match &nested.filter().must {
                     None => vec![],
                     Some(musts_conditions) => {
-                        let full_path = nested_path.extend(nested.key());
+                        let full_path = nested_path.extend(&nested.array_key());
                         let matching_indices = nested_conditions_converter(
                             musts_conditions,
                             field_indexes,

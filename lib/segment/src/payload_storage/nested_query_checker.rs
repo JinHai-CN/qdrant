@@ -302,22 +302,9 @@ mod tests {
             Arc::new(AtomicRefCell::new(id_tracker)),
         );
 
-        // single match condition in nested field no arrays
-        let match_nested_name_condition = Filter::new_must(Condition::new_nested(
-            "country".to_string(),
-            Filter::new_must(Condition::Field(FieldCondition::new_match(
-                "name".to_string(),
-                "Germany".to_owned().into(),
-            ))),
-        ));
-
-        assert!(payload_checker.check(0, &match_nested_name_condition));
-        assert!(!payload_checker.check(1, &match_nested_name_condition));
-        assert!(!payload_checker.check(2, &match_nested_name_condition));
-
         // single range condition nested field in array
         let population_range_condition = Filter::new_must(Condition::new_nested(
-            "country.cities[]".to_string(),
+            "country.cities".to_string(),
             Filter::new_must(Condition::Field(FieldCondition::new_range(
                 "population".to_string(),
                 Range {
@@ -335,7 +322,7 @@ mod tests {
 
         // single values_count condition nested field in array
         let sightseeing_value_count_condition = Filter::new_must(Condition::new_nested(
-            "country.cities[]".to_string(),
+            "country.cities".to_string(),
             Filter::new_must(Condition::Field(FieldCondition::new_values_count(
                 "sightseeing".to_string(),
                 ValuesCount {
@@ -353,7 +340,7 @@ mod tests {
 
         // single IsEmpty condition nested field in array
         let is_empty_condition = Filter::new_must(Condition::new_nested(
-            "country.cities[]".to_string(),
+            "country.cities".to_string(),
             Filter::new_must(Condition::IsEmpty(IsEmptyCondition {
                 is_empty: PayloadField {
                     key: "sightseeing".to_string(),
@@ -367,7 +354,7 @@ mod tests {
 
         // single IsNull condition nested field in array
         let is_empty_condition = Filter::new_must(Condition::new_nested(
-            "country.cities[]".to_string(),
+            "country.cities".to_string(),
             Filter::new_must(Condition::IsNull(IsNullCondition {
                 is_null: PayloadField {
                     key: "location".to_string(),
@@ -381,7 +368,7 @@ mod tests {
 
         // single geo-bounding box in nested field in array
         let location_close_to_berlin_box_condition = Filter::new_must(Condition::new_nested(
-            "country.cities[]".to_string(),
+            "country.cities".to_string(),
             Filter::new_must(Condition::Field(FieldCondition::new_geo_bounding_box(
                 "location".to_string(),
                 GeoBoundingBox {
@@ -404,7 +391,7 @@ mod tests {
 
         // single geo-bounding box in nested field in array
         let location_close_to_berlin_radius_condition = Filter::new_must(Condition::new_nested(
-            "country.cities[]".to_string(),
+            "country.cities".to_string(),
             Filter::new_must(Condition::Field(FieldCondition::new_geo_radius(
                 "location".to_string(),
                 GeoRadius {

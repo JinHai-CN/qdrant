@@ -1151,9 +1151,22 @@ impl NestedContainer {
     pub fn new(nested: NestedCondition) -> Self {
         Self { nested }
     }
-    pub fn key(&self) -> &str {
+
+    /// Get the raw key without any modifications
+    pub fn raw_key(&self) -> &str {
         &self.nested.key
     }
+
+    /// Nested is made to be used with arrays, so we add `[]` to the key if it is not present for convenience
+    pub fn array_key(&self) -> String {
+        let raw = self.raw_key();
+        if raw.ends_with("[]") {
+            raw.to_string()
+        } else {
+            format!("{}[]", raw)
+        }
+    }
+
     pub fn filter(&self) -> &Filter {
         &self.nested.filter
     }
@@ -1661,7 +1674,7 @@ mod tests {
           "must": [
             {
               "nested": {
-                "key": "country.cities[]",
+                "key": "country.cities",
                 "filter": {
                   "must": [
                     {
@@ -1688,7 +1701,8 @@ mod tests {
         assert_eq!(musts.len(), 1);
         match musts.get(0) {
             Some(Condition::Nested(nested_condition)) => {
-                assert_eq!(nested_condition.nested.key, "country.cities[]");
+                assert_eq!(nested_condition.raw_key(), "country.cities");
+                assert_eq!(nested_condition.array_key(), "country.cities[]");
                 let nested_musts = nested_condition.filter().must.as_ref().unwrap();
                 assert_eq!(nested_musts.len(), 2);
                 let first_must = nested_musts.get(0).unwrap();

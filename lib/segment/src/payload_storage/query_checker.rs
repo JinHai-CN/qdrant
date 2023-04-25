@@ -90,8 +90,8 @@ where
             has_id.has_id.contains(&external_id)
         }
         Condition::Nested(nested) => {
-            let nested_filter = &nested.nested.filter;
-            let nested_path = JsonPathPayload::new(nested.nested.key.clone());
+            let nested_filter = nested.filter();
+            let nested_path = JsonPathPayload::new(nested.array_key());
             check_nested_filter(&nested_path, nested_filter, &get_payload)
         }
         Condition::Filter(_) => unreachable!(),

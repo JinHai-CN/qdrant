@@ -135,7 +135,7 @@ def test_nesting_nested_payload_query_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "arr1[]",
+                            "key": "arr1",
                             "filter": {
                                 "must": [
                                     {
@@ -166,7 +166,7 @@ def test_nesting_nested_payload_query_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "arr1[]",
+                            "key": "arr1",
                             "filter": {
                                 "must": [
                                     {
@@ -197,7 +197,7 @@ def test_nesting_nested_payload_query_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "arr1[]",
+                            "key": "arr1",
                             "filter": {
                                 "must": [
                                     {
@@ -228,7 +228,7 @@ def test_nesting_nested_payload_query_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "arr1[].arr2[]",
+                            "key": "arr1[].arr2",
                             "filter": {
                                 "must": [
                                     {
@@ -259,12 +259,12 @@ def test_nesting_nested_payload_query_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "arr1[]",
+                            "key": "arr1",
                             "filter": {
                                 "must": [
                                     {
                                         "nested": {
-                                            "key": "arr2[]",
+                                            "key": "arr2",
                                             "filter": {
                                                 "must": [
                                                     {
@@ -299,12 +299,12 @@ def test_nesting_nested_payload_query_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "arr1[]",
+                            "key": "arr1",
                             "filter": {
                                 "must": [
                                     {
                                         "nested": {
-                                            "key": "arr2[]",
+                                            "key": "arr2",
                                             "filter": {
                                                 "must": [
                                                     {

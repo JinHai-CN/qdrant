@@ -149,7 +149,7 @@ where
                         payload_provider.clone(),
                         estimator,
                         total,
-                        Some(JsonPathPayload::new(nested_filter.key().to_string())),
+                        Some(JsonPathPayload::new(nested_filter.array_key())),
                     );
                     (OptimizedCondition::Filter(optimized_filter), estimation)
                 }

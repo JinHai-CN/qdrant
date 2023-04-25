@@ -70,7 +70,7 @@ def test_nested_payload_indexing_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "country.cities",  # Do not implicitly do inside nested array
+                            "key": "country.cities[]",
                             "filter": {
                                 "must": [
                                     {
@@ -89,20 +89,29 @@ def test_nested_payload_indexing_operations():
         }
     )
     assert response.ok
-    assert len(response.json()['result']['points']) == 0
+    assert len(response.json()['result']['points']) == 1
 
-    # Search through array with payload index
+    # Search nested array without payload index (implicit array key)
     response = request_with_validation(
         api='/collections/{collection_name}/points/scroll',
         method="POST",
         path_params={'collection_name': collection_name},
         body={
             "filter": {
-                "should": [
+                "must": [
                     {
-                        "key": "country.cities[].population",
-                        "range": {
-                            "gte": 9.0,
+                        "nested": {
+                            "key": "country.cities",  # implicitly add array [] to key
+                            "filter": {
+                                "must": [
+                                    {
+                                        "key": "population",
+                                        "range": {
+                                            "gte": 9.0,
+                                        }
+                                    }
+                                ]
+                            }
                         }
                     }
                 ]
@@ -112,8 +121,6 @@ def test_nested_payload_indexing_operations():
     )
     assert response.ok
     assert len(response.json()['result']['points']) == 1
-    # Only Japan has a city with population greater than 9.0
-    assert response.json()['result']['points'][0]['payload']['country']['name'] == "Japan"
 
     # Search with nested filter on non indexed payload
     response = request_with_validation(
@@ -125,7 +132,7 @@ def test_nested_payload_indexing_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "country.cities[]",
+                            "key": "country.cities",
                             "filter": {
                                 "must": [
                                     {
@@ -157,7 +164,7 @@ def test_nested_payload_indexing_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "country.cities[]",
+                            "key": "country.cities",
                             "filter": {
                                 "must": [
                                     {
@@ -189,7 +196,7 @@ def test_nested_payload_indexing_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "country.cities[]",
+                            "key": "country.cities",
                             "filter": {
                                 "must": [
                                     {
@@ -229,7 +236,7 @@ def test_nested_payload_indexing_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "country.cities[]",
+                            "key": "country.cities",
                             "filter": {
                                 "must": [
                                     {
@@ -258,37 +265,6 @@ def test_nested_payload_indexing_operations():
     # Only Tokio has more than 8M inhabitants and less than 3 sightseeing
     assert response.json()['result']['points'][0]['payload']['country']['name'] == "Japan"
 
-    # Search nested empty field
-    response = request_with_validation(
-        api='/collections/{collection_name}/points/scroll',
-        method="POST",
-        path_params={'collection_name': collection_name},
-        body={
-            "filter": {
-                "must": [
-                    {
-                        "nested": {
-                            "key": "country",
-                            "filter": {
-                                "must": [
-                                    {
-                                        "is_empty": {
-                                            "key": "cities"
-                                        }
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                ]
-            },
-            "limit": 3
-        }
-    )
-    assert response.ok
-    assert len(response.json()['result']['points']) == 1
-    assert response.json()['result']['points'][0]['payload']['country']['name'] == "Nauru"
-
     # Search nested null field
     response = request_with_validation(
         api='/collections/{collection_name}/points/scroll',
@@ -299,12 +275,12 @@ def test_nested_payload_indexing_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "country",
+                            "key": "country.cities",
                             "filter": {
                                 "must": [
                                     {
                                         "is_null": {
-                                            "key": "capital"
+                                            "key": "name"
                                         }
                                     }
                                 ]
@@ -341,7 +317,7 @@ def test_nested_payload_indexing_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "country.cities[]",
+                            "key": "country.cities",
                             "filter": {
                                 "must": [
                                     {
@@ -375,7 +351,7 @@ def test_nested_payload_indexing_operations():
                 "must": [
                     {
                         "nested": {
-                            "key": "country.cities[]",
+                            "key": "country.cities",
                             "filter": {
                                 "must": [
                                     {
