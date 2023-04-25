@@ -84,8 +84,7 @@ pub fn nested_condition_converter<'a>(
 ) -> NestedMatchingIndicesFn<'a> {
     match condition {
         Condition::Field(field_condition) => {
-            // full path of the condition field
-            let full_path = nested_path.add_segment(&field_condition.key);
+            let full_path = nested_path.extend(&field_condition.key);
             field_indexes
                 .get(&full_path.path)
                 .and_then(|indexes| {
@@ -122,7 +121,7 @@ pub fn nested_condition_converter<'a>(
                 match &nested.filter().must {
                     None => vec![],
                     Some(musts_conditions) => {
-                        let full_path = nested_path.add_segment(nested.key());
+                        let full_path = nested_path.extend(nested.key());
                         let matching_indices = nested_conditions_converter(
                             musts_conditions,
                             field_indexes,

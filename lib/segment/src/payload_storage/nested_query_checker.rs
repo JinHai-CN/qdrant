@@ -69,8 +69,7 @@ pub fn check_nested_is_empty_condition(
     is_empty: &IsEmptyCondition,
     payload: &Payload,
 ) -> Vec<usize> {
-    // full nested path
-    let full_path = nested_path.add_segment(&is_empty.is_empty.key);
+    let full_path = nested_path.extend(&is_empty.is_empty.key);
     let field_values = payload.get_value(&full_path.path);
 
     let mut matching_indices = vec![];
@@ -90,8 +89,7 @@ pub fn check_nested_is_null_condition(
     is_null: &IsNullCondition,
     payload: &Payload,
 ) -> Vec<usize> {
-    // full nested path
-    let full_path = nested_path.add_segment(&is_null.is_null.key);
+    let full_path = nested_path.extend(&is_null.is_null.key);
     let field_values = payload.get_value(&full_path.path);
 
     match field_values {
@@ -127,7 +125,7 @@ pub fn nested_check_field_condition(
     payload: &Payload,
     nested_path: &JsonPathPayload,
 ) -> Vec<usize> {
-    let full_path = nested_path.add_segment(&field_condition.key);
+    let full_path = nested_path.extend(&field_condition.key);
     let field_values = payload.get_value(&full_path.path);
 
     let mut matching_indices = vec![];

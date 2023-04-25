@@ -58,10 +58,7 @@ impl StructPayloadIndex {
         condition: &FieldCondition,
         nested_path: Option<&JsonPathPayload>,
     ) -> Option<CardinalityEstimation> {
-        let full_path = match nested_path {
-            Some(path) => path.add_segment(&condition.key),
-            None => JsonPathPayload::new(condition.key.to_string()),
-        };
+        let full_path = JsonPathPayload::extend_or_new(nested_path, &condition.key);
         self.field_indexes.get(&full_path.path).and_then(|indexes| {
             // rewrite condition with fullpath to enable cardinality estimation
             let full_path_condition = FieldCondition {
@@ -239,17 +236,12 @@ impl StructPayloadIndex {
             Condition::Filter(_) => panic!("Unexpected branching"),
             Condition::Nested(nested) => {
                 // propagate complete nested path in case of multiple nested layers
-                let nested_path = match nested_path {
-                    Some(path) => path.add_segment(nested.key()),
-                    None => JsonPathPayload::new(nested.key().to_string()),
-                };
-                self.estimate_nested_cardinality(nested.filter(), &nested_path)
+                let full_path = JsonPathPayload::extend_or_new(nested_path, nested.key());
+                self.estimate_nested_cardinality(nested.filter(), &full_path)
             }
             Condition::IsEmpty(IsEmptyCondition { is_empty: field }) => {
-                let full_path = match nested_path {
-                    Some(path) => format!("{}.{}", path.path, field.key),
-                    None => field.key.to_string(),
-                };
+                let full_path = JsonPathPayload::extend_or_new(nested_path, &field.key);
+                let full_path = full_path.path;
                 let total_points = self.total_points();
 
                 let mut indexed_points = 0;
@@ -277,10 +269,8 @@ impl StructPayloadIndex {
                 }
             }
             Condition::IsNull(IsNullCondition { is_null: field }) => {
-                let full_path = match nested_path {
-                    Some(path) => format!("{}.{}", path.path, field.key),
-                    None => field.key.to_string(),
-                };
+                let full_path = JsonPathPayload::extend_or_new(nested_path, &field.key);
+                let full_path = full_path.path;
                 let total_points = self.total_points();
 
                 let mut indexed_points = 0;

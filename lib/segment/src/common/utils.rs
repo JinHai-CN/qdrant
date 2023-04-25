@@ -320,9 +320,16 @@ impl JsonPathPayload {
         Self { path }
     }
 
-    pub fn add_segment(&self, segment: &str) -> Self {
+    pub fn extend(&self, segment: &str) -> Self {
         let full_path = format!("{}.{}", self.path, segment);
         JsonPathPayload::new(full_path)
+    }
+
+    pub fn extend_or_new(base: Option<&Self>, segment: &str) -> Self {
+        match base {
+            Some(path) => path.extend(segment),
+            None => JsonPathPayload::new(segment.to_string()),
+        }
     }
 }
 
