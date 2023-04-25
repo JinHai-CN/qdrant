@@ -384,7 +384,7 @@ def test_nested_payload_indexing_operations():
     )
     assert response.ok
     assert len(response.json()['result']['points']) == 1
-    assert response.json()['result']['points'][0]['payload']['country']['name'] == "France"
+    assert response.json()['result']['points'][0]['payload']['country']['capital'] == "Paris"
 
     # Delete indexes
     response = request_with_validation(
@@ -410,3 +410,4 @@ def test_nested_payload_indexing_operations():
     )
     assert response.ok
     assert len(response.json()['result']['payload_schema']) == 0
+
