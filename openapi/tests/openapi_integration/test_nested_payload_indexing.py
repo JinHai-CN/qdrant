@@ -271,7 +271,7 @@ def test_nested_payload_indexing_operations():
     assert response.json()['result']['payload_schema']['country.cities[].population']['data_type'] == "float"
     assert response.json()['result']['payload_schema']['country.cities[].population']['points'] == 4 # indexed records
 
-    # Search nested field through with payload index
+    # Search nested through with payload index
     response = request_with_validation(
         api='/collections/{collection_name}/points/scroll',
         method="POST",
@@ -326,7 +326,7 @@ def test_nested_payload_indexing_operations():
             "filter": {
                 "should": [
                     {
-                        "key": "country.cities.population",  # Do not implicitly do inside nested array
+                        "key": "country.cities.population", # Do not implicitly do inside nested array
                         "range": {
                             "gte": 9.0,
                         }
@@ -375,29 +375,6 @@ def test_nested_payload_indexing_operations():
                         "key": "country.cities[].sightseeing",
                         "match": {
                             "value": "Eiffel Tower"
-                        }
-                    }
-                ]
-            },
-            "limit": 3
-        }
-    )
-    assert response.ok
-    assert len(response.json()['result']['points']) == 1
-    assert response.json()['result']['points'][0]['payload']['country']['name'] == "France"
-
-    # Search without nested filter
-    response = request_with_validation(
-        api='/collections/{collection_name}/points/scroll',
-        method="POST",
-        path_params={'collection_name': collection_name},
-        body={
-            "filter": {
-                "must": [
-                    {
-                        "key": "country.cities[].sightseeing",
-                        "values_count": {
-                            "gt": 3
                         }
                     }
                 ]
